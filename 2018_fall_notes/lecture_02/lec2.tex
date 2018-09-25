@@ -1,0 +1,140 @@
+\documentclass[a4paper]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\title{Machine Learning Lecture 2}
+\author{Nathan Kullus}
+
+\begin{document}
+\maketitle
+
+
+\section{Supervised Learning}
+\subsection{Definition}
+\textit{Def: }Given examples $X_1, Y_1,\ldots, X_n, Y_n$, we want to learn a prediction rule \textit{f} such that for any new unseen example \textit{X,Y} we have Y $\approx$ \textit{f(x)} (approximately loosely, can have different meaning). \\ i.e.: Given a new pair \textit{X,Y} where Y is hidden and we need to guess its hidden value (but why hidden?)
+\begin{itemize}
+\item unknowable (we will only realize in the future)
+\item need such an expert to tell us the value
+\end{itemize}
+\subsection{What is \textit{X} and \textit{Y}?}
+\textit{X} represents the features/covariates while \textit{Y} represents the outputs/responses/labels \\We classify the cases as 
+\begin{itemize}
+\item $G$ = $\{a,b\}$ is a binary classification where $a$ and $b$ are any arbitrary. 
+\begin{itemize}
+\item e.g. $G$ = $\{1,0\}$, \quad $G$ = $\{happy, sad\}$
+\end{itemize}
+\end{itemize}
+\begin{itemize}
+\item $G$ = $\{a, b, c, d\dots\}$ where $|G|< \infty$, is a multi class classification.
+\end{itemize}
+\begin{itemize}
+\item $G = R$, where $R$ is regression.
+\end{itemize}
+
+
+
+\section{First Classification Algorithm: \textit{k}-Nearest Neighbor}
+
+\subsection{What is \textit{k}-NN?} 
+
+Suppose we have a query $X$, 
+\begin{enumerate}
+\item Find the k "closest" $x$ values among the examples $X_1, X_2 \ldots,X_n$
+\item We then index them $i_1,\dots,i_k \in [n] = \{1,2 \dots, n\}$
+\item Classify as the majority of the corresponding labels: 
+\[\hat{Y} = mode(\{Y_{i1}, Y_{i2} \dots, Y_{ik}\})\] \\ where mode is just exactly its mathematical meaning .
+\end{enumerate} $Q$: But what does "close" exactly mean? \\ $A$: It is a \textbf{distance measure}. \\ Suppose $X$ is a vector of numerical features: \[{X_i} = \left \{
+  \begin{tabular}{ccc}
+  $xi_1$ \\
+  \dots \\
+  $xi_p$
+  \end{tabular}
+\right \}\] 
+\textit{Xi} $\in$  ${\rm I\!R^p}$, it is also known as  the Euclidean distance \[ \sqrt{(x_{1} - x_{2})^2 + (y_{1} - y_{2})^2} \]
+\\ Or we could use other distance such as: 
+$||x - x'||_1 = \sum_{j=1}^p|x_j - x_j'| $ or $||x - x'||_\infty = max_j|x_j - x_j'| $
+
+\subsection{Constructing feature vectors}
+\begin{enumerate}
+\item If we want to use distance functions listed above, we may want to first standardize the data: 
+\[ x_{ij} \leftarrow \frac{\left ( x_{ij} -\widehat{\mu _{j}} \right )}{\widehat{\sigma _{j}}} \]
+where $\widehat{\mu _{j}}$ and $\widehat{\sigma _{j}}$ is the mean and standard deviation of $x_{1j}$, ..., $x_{nj}$.
+\\ We want to standardize the data because certain features can impact the distance disproportionately, as when measurements are done with wildly varying units such as ounces vs. tons. This may not be an issue when all the features are of a similar nature. For example, x represents pixel brightness in MNIST handwritten example.
+
+\item If some features are categorical, we can encode those as one-hot encodings. \\
+For example, if the question asks which of university did you attend, among $\{$ Yale, Columbia, Cornell$\}$, we could use three binary variables and encode them into Yale as $\begin{pmatrix} 1\\ 0\\ 0\end{pmatrix}$, Columbia as $\begin{pmatrix} 0\\ 1\\ 0\end{pmatrix}$, Cornell as $\begin{pmatrix} 0\\ 0\\ 1\end{pmatrix}$.
+
+\item Later in class, we will discuss about more abstract distances that could be used in kNN. For example, x can be movie plot summary texts, and distance is some sort of similarity between texts.
+\end{enumerate}
+
+\subsection{Out-of-Sample Evaluation}
+\par We have learned that kNN tries to make $\widehat{Y}$ equal to $Y$. In order to evaluate kNN, we want to know how often kNN successfully make $\widehat{Y}$ equal to $Y$. 
+\\
+\par If X,Y are random variables representing new random examples drawn from the population of examples, then we want low risk
+
+\[ R\left ( f \right )= E \left [ l \left ( Y, F\left ( x \right ) \right ) \right ] \]
+
+where $R \left ( f \right )$ indicates how often f is wrong, and $l$ is some loss function. For now, we define loss function as $ l \left ( y,\widehat{y} \right ) = \mathbb{I} \left [ y\neq \widehat{y} \right ] $, which means that if prediction is wrong, penalty is 1. If prediction is right, there is no penalty (penalty = 0). 
+\par To estimate $R\left(f\right)$, we can take a test set of labeled examples, $x_{1}^{test}$, $y_{1}^{test}$, ..., $x_{n}^{test}$, $y_{n}^{test}$, which are drawn from the population of examples. Then, we want to compute
+
+\[\widehat{R_{n_{test}}}\left ( f \right )= \frac{1}{n_{test}}\Sigma _{i=1}^{n_{test}}l\left ( Y_{i}, f(x_{i}^{test}) \right ) \]
+
+which is a consistent and unbiased estimate of $R\left(f \right)$.
+\par In most of the times, we get the test set by splitting randomly from the training data. We cannot just use the training data, because it will cause bias, and it will be biased downward(which means overly optimistic). $f$ will look better than it really is, and this would encourage over-fitting. For example, when we test $f_{1-NN}$ on training data, $\widehat{R_{n}}(\widehat{f_{1-NN}})$ would be equal to 0, which is wrong an it will make some mistakes. 
+
+\section{Bayes Classifier (and Bayes Rate)}
+
+kNN is version of the Bayes classifier. The best classifier is one that has the smallest $\hat{R_f}$ value.
+\begin{align*}
+R[f] &= \mathbb{E}[l(y, f(x))] \\
+&= \mathbb{E}[\mathbb{I}[y \neq f(x)]] \\
+&= \mathbb{E}[1 - \mathbb{I}[y = f(x)]] \\
+&= \mathbb{E}[\mathbb{E}[1 - \mathbb{I}[y = f(x)] \vert x]] \\
+&= \mathbb{E}[1 - \mathbb{E}[\mathbb{I}[y = f(x)] \vert x]] \\
+&= \mathbb{E}[1 - \sum_{y \in G} \mathbb{P}(y = \hat{y} \vert X)\mathbb{I}[y = f(x)]]
+\end{align*}
+We can choose one $y \in G$ for each $x$ such that $f(x) = y$. As a result, we need to choose a suitable $y$ to minimize the function $R[f]$.
+\begin{equation*}
+R[f] = \mathbb{E}[\max_{\forall x} \mathbb{P}(y = \hat{y} \vert X)\mathbb{I}[y = f(x)]]
+\end{equation*}
+\begin{equation*}
+\boxed{f^\prime(x) = \argmax_{y \in G} \mathbb{P}(y = \hat{y} \vert x) = mode(y \vert x)}
+\end{equation*}
+The Bayes classifier is then defined by the above equation. Further, $f^\prime(x)$ is defined as the Bayes Rate. It stands for the fundamental limit of the predictability of $y$ from $x$.
+
+\subsection{kNN as a probabilistic classifier}
+
+Lets look at how we can modify our estimate (from kNN) as a probability estimate.
+\[\hat{\mathbb{P}}(\hat{y}=y \vert \hat{x} = x) = \frac{1}{k}\sum_{j=1}^{k} \mathbb{I}[\hat{y}_{i_{k}} = y]\]
+
+On the right hand side of the equation, we sum up over the fraction of $k$ labels corresponding to the $k$ nearest examples that are equal to $\hat{y}$.
+
+Our kNN prediction can be written as $\hat{Y} = \argmax_{y \in G} \mathbb{\hat{P}}(\hat{y} = y \vert \hat{x} = x)$ mimics the Bayes classifier with an estimate on the the conditional probability.
+
+For $G = {0, 1}$, this is going to translate to
+\begin{align*}
+\hat{Y} &= \mathbb{I}[\mathbb{P}(\hat{y} = 1 \vert x) > \frac{1}{2} \\
+&= \begin{cases}0 &  \mathbb{P} \leq \frac{1}{2} \\ 1 &  \mathbb{P} > \frac{1}{2} \end{cases}
+\end{align*}
+
+Modifying the threshold changes classification rates which may be different for different classes of problems.
+
+
+
+
+
+\end{document}
